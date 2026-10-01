@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LoginPage, ProfileSetupPage, SponsorRegisterPage } from './AuthPages'
+import { CreatorDashboard, LoginPage, ProfileSetupPage, SponsorRegisterPage } from './AuthPages'
+import { fallbackInfluencers } from './data/influencers'
+import { getInfluencers, hasAuthToken, hasCreatorApi, logoutAccount } from './services/creators'
 import './App.css'
 
 const platformMeta = {
@@ -11,136 +13,9 @@ const platformMeta = {
   Podcast: { icon: '◌', label: 'Podcast' },
 }
 
-const influencers = [
-  {
-    id: 1,
-    name: 'Aisha Kapoor',
-    category: 'Fashion',
-    city: 'Delhi',
-    followers: 185000,
-    engagement: 7.8,
-    likes: 18800,
-    views: 2400000,
-    price: 3500,
-    rating: 4.9,
-    handle: '@aishakapoor',
-    image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80',
-    bio: 'Style-forward creator with premium fashion edits and reels.',
-    platforms: ['Instagram', 'YouTube', 'TikTok'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/aishakapoor' },
-      { name: 'YouTube', url: 'https://youtube.com/@aishakapoor' },
-      { name: 'TikTok', url: 'https://www.tiktok.com/@aishakapoor' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Rohan Menon',
-    category: 'Travel',
-    city: 'Bengaluru',
-    followers: 260000,
-    engagement: 6.4,
-    likes: 24300,
-    views: 3200000,
-    price: 4200,
-    rating: 4.8,
-    handle: '@travelwithrohan',
-    image:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80',
-    bio: 'Travel documentary creator blending city stories and adventure.',
-    platforms: ['Instagram', 'Blog'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/travelwithrohan' },
-      { name: 'Blog', url: 'https://travelwithrohan.com' },
-    ],
-  },
-  {
-    id: 3,
-    name: 'Naina Shah',
-    category: 'Beauty',
-    city: 'Mumbai',
-    followers: 132000,
-    engagement: 8.9,
-    likes: 17100,
-    views: 1800000,
-    price: 3000,
-    rating: 4.9,
-    handle: '@nainabeauty',
-    image:
-      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=80',
-    bio: 'Skincare and glam tutorials with strong community trust.',
-    platforms: ['Instagram', 'Reels'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/nainabeauty' },
-      { name: 'Reels', url: 'https://instagram.com/nainabeauty/reels' },
-    ],
-  },
-  {
-    id: 4,
-    name: 'Kabir Sethi',
-    category: 'Fitness',
-    city: 'Hyderabad',
-    followers: 320000,
-    engagement: 5.9,
-    likes: 28700,
-    views: 4100000,
-    price: 5000,
-    rating: 4.7,
-    handle: '@kabirstrong',
-    image:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80',
-    bio: 'Strength and wellness coach promoting performance-based lifestyle.',
-    platforms: ['Instagram', 'YouTube'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/kabirstrong' },
-      { name: 'YouTube', url: 'https://youtube.com/@kabirstrong' },
-    ],
-  },
-  {
-    id: 5,
-    name: 'Meher Ali',
-    category: 'Food',
-    city: 'Lucknow',
-    followers: 98000,
-    engagement: 9.2,
-    likes: 14600,
-    views: 1200000,
-    price: 2600,
-    rating: 4.8,
-    handle: '@meherbites',
-    image:
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=80',
-    bio: 'Food storytelling through creator-led restaurant reviews.',
-    platforms: ['Instagram', 'TikTok'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/meherbites' },
-      { name: 'TikTok', url: 'https://www.tiktok.com/@meherbites' },
-    ],
-  },
-  {
-    id: 6,
-    name: 'Vihaan Roy',
-    category: 'Lifestyle',
-    city: 'Pune',
-    followers: 214000,
-    engagement: 7.1,
-    likes: 21200,
-    views: 2800000,
-    price: 3900,
-    rating: 4.9,
-    handle: '@vihaanlives',
-    image:
-      'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=900&q=80',
-    bio: 'Lifestyle and daily vlogs with polished storytelling.',
-    platforms: ['Instagram', 'YouTube', 'Podcast'],
-    socialLinks: [
-      { name: 'Instagram', url: 'https://instagram.com/vihaanlives' },
-      { name: 'YouTube', url: 'https://youtube.com/@vihaanlives' },
-      { name: 'Podcast', url: 'https://open.spotify.com/user/vihaanlives' },
-    ],
-  },
-]
+const defaultCreatorImage = fallbackInfluencers[0].image
+const isPublicRoute = (route) =>
+  route.startsWith('#login') || route === '#profile' || route === '#register/sponsor'
 
 const formatCompact = (value) =>
   new Intl.NumberFormat('en-US', {
@@ -156,10 +31,17 @@ const formatCurrency = (value) =>
   }).format(value)
 
 function App() {
-  const [route, setRoute] = useState(window.location.hash)
+  const [route, setRoute] = useState(() => {
+    const requestedRoute = window.location.hash
+    if (isPublicRoute(requestedRoute)) return requestedRoute
+    return hasAuthToken() ? requestedRoute || '#top' : '#login/influencer'
+  })
+  const [influencers, setInfluencers] = useState(hasCreatorApi ? [] : fallbackInfluencers)
+  const [isLoadingCreators, setIsLoadingCreators] = useState(hasCreatorApi)
+  const [creatorApiError, setCreatorApiError] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('engagement')
-  const [selectedId, setSelectedId] = useState(influencers[0].id)
+  const [selectedId, setSelectedId] = useState(fallbackInfluencers[0].id)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
 
@@ -177,14 +59,73 @@ function App() {
       if (sortBy === 'followers') return b.followers - a.followers
       return b.engagement - a.engagement
     })
-  }, [selectedCategory, sortBy])
+  }, [influencers, selectedCategory, sortBy])
 
   const topInfluencers = useMemo(
     () => [...influencers].sort((a, b) => b.engagement - a.engagement).slice(0, 3),
-    [],
+    [influencers],
   )
 
   useEffect(() => {
+    if (!hasCreatorApi) return undefined
+
+    const controller = new AbortController()
+    const loadCreators = () => {
+      getInfluencers({ signal: controller.signal })
+        .then((creators) => {
+          setInfluencers(creators)
+          setCreatorApiError('')
+          setSelectedId((currentId) =>
+            creators.some((creator) => creator.id === currentId)
+              ? currentId
+              : creators[0]?.id ?? null,
+          )
+        })
+        .catch((error) => {
+          if (error.name === 'AbortError') return
+          if (error.status === 401) {
+            logoutAccount()
+            window.location.hash = '#login/influencer'
+            return
+          }
+          setInfluencers(fallbackInfluencers)
+          setCreatorApiError('Could not load live creators. Showing sample profiles instead.')
+        })
+        .finally(() => setIsLoadingCreators(false))
+    }
+
+    if (hasAuthToken()) loadCreators()
+    window.addEventListener('creators-updated', loadCreators)
+    window.addEventListener('auth-updated', loadCreators)
+
+    return () => {
+      window.removeEventListener('creators-updated', loadCreators)
+      window.removeEventListener('auth-updated', loadCreators)
+      controller.abort()
+    }
+  }, [])
+
+  useEffect(() => {
+    const syncRoute = () => {
+      const nextRoute = window.location.hash
+      if (!isPublicRoute(nextRoute) && !hasAuthToken()) {
+        window.location.hash = '#login/influencer'
+        setRoute('#login/influencer')
+        return
+      }
+      setRoute(nextRoute || '#top')
+    }
+
+    if (!window.location.hash) {
+      window.location.hash = hasAuthToken() ? '#top' : '#login/influencer'
+    }
+    window.addEventListener('hashchange', syncRoute)
+    return () => window.removeEventListener('hashchange', syncRoute)
+  }, [])
+
+  useEffect(() => {
+    if (topInfluencers.length < 2) return undefined
+
     const timer = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % topInfluencers.length)
     }, 3200)
@@ -192,18 +133,16 @@ function App() {
     return () => window.clearInterval(timer)
   }, [topInfluencers.length])
 
-  useEffect(() => {
-    const syncRoute = () => setRoute(window.location.hash)
-    window.addEventListener('hashchange', syncRoute)
-    return () => window.removeEventListener('hashchange', syncRoute)
-  }, [])
-
   const currentInfluencer = topInfluencers[activeSlide] ?? topInfluencers[0]
 
   const selectedInfluencer =
     filteredInfluencers.find((influencer) => influencer.id === selectedId) ??
     filteredInfluencers[0] ??
     null
+
+  const instagramLink = selectedInfluencer?.socialLinks?.find((link) =>
+    link.name.toLowerCase().includes('instagram'),
+  )
 
   const openProfile = (id) => {
     setSelectedId(id)
@@ -220,6 +159,8 @@ function App() {
 
   if (route === '#profile') return <ProfileSetupPage />
 
+  if (route === '#dashboard') return <CreatorDashboard />
+
   return (
     <div className="page-shell">
       <header className="topbar">
@@ -229,19 +170,26 @@ function App() {
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#discover">Discover</a>
           <a href="#pricing">Pricing</a>
-          <a href="#how-it-works">How it works</a>
         </nav>
         <div className="nav-actions">
-          <a className="secondary-btn small-btn" href="#login/influencer">
-            Sign in
-          </a>
-          <a className="primary-btn small-btn" href="#profile">
-            Create profile
-          </a>
+          <a className="secondary-btn small-btn" href="#dashboard">My profile</a>
+          <button
+            type="button"
+            className="primary-btn small-btn"
+            onClick={() => {
+              logoutAccount()
+              window.location.hash = '#login/influencer'
+            }}
+          >
+            Sign out
+          </button>
         </div>
       </header>
 
       <main id="top">
+        {isLoadingCreators && <p className="creator-data-notice" role="status">Loading live creator profiles...</p>}
+        {creatorApiError && <p className="creator-data-notice" role="alert">{creatorApiError}</p>}
+
         <section className="hero-section hero-section--top">
           <div className="hero-panel top-influencers-panel top-influencers-panel--featured">
             <div className="panel-top">
@@ -278,7 +226,7 @@ function App() {
                 <div className="carousel-card carousel-card--featured">
                   <div className="carousel-image-wrap">
                     <img
-                      src={currentInfluencer.image}
+                      src={currentInfluencer.image || defaultCreatorImage}
                       alt={currentInfluencer.name}
                       className="carousel-image"
                     />
@@ -334,7 +282,7 @@ function App() {
                   onClick={() => openProfile(influencer.id)}
                 >
                   <span className="leaderboard-rank">0{index + 1}</span>
-                  <img src={influencer.image} alt="" className="avatar" />
+                  <img src={influencer.image || defaultCreatorImage} alt="" className="avatar" />
                   <span className="leaderboard-name">
                     <strong>{influencer.name}</strong>
                     <small>{influencer.category} · {influencer.city}</small>
@@ -394,7 +342,7 @@ function App() {
                 className={selectedId === influencer.id ? 'discover-card active' : 'discover-card'}
                 onClick={() => openProfile(influencer.id)}
               >
-                <img src={influencer.image} alt={influencer.name} className="discover-card-image" />
+                <img src={influencer.image || defaultCreatorImage} alt={influencer.name} className="discover-card-image" />
 
                 <div className="discover-card-body">
                   <div className="discover-card-top">
@@ -424,6 +372,9 @@ function App() {
                 </div>
               </button>
             ))}
+            {!isLoadingCreators && filteredInfluencers.length === 0 && (
+              <p className="empty-results">No creator profiles found.</p>
+            )}
           </div>
         </section>
 
@@ -465,14 +416,16 @@ function App() {
         {isModalOpen && selectedInfluencer && (
           <div className="modal-overlay" onClick={closeProfile}>
             <div className="detail-modal" onClick={(event) => event.stopPropagation()}>
-              <button type="button" className="close-modal" onClick={closeProfile} aria-label="Close profile">
-                ×
-              </button>
+              <div className="detail-modal-toolbar">
+                <button type="button" className="close-modal" onClick={closeProfile} aria-label="Close profile">
+                  ×
+                </button>
+              </div>
 
               <div className="detail-content">
                 <div className="detail-visual">
                   <img
-                    src={selectedInfluencer.image}
+                    src={selectedInfluencer.image || defaultCreatorImage}
                     alt={selectedInfluencer.name}
                     className="detail-image"
                   />
@@ -522,16 +475,10 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="platform-row modal-platforms">
-                    {selectedInfluencer.platforms.map((platform) => (
-                      <span key={platform} className="platform-pill">
-                        {platform}
-                      </span>
-                    ))}
-                  </div>
-
                   <div className="social-links">
-                    {selectedInfluencer.socialLinks.map((link) => (
+                    {selectedInfluencer.socialLinks
+                      .filter((link) => !link.name.toLowerCase().includes('instagram'))
+                      .map((link) => (
                       <a
                         key={link.name}
                         href={link.url}
@@ -541,8 +488,34 @@ function App() {
                       >
                         {link.name}
                       </a>
-                    ))}
+                      ))}
                   </div>
+
+                  {(selectedInfluencer.contactEmail || instagramLink) && (
+                    <div className="contact-block">
+                      <span className="contact-actions-label">Contact by</span>
+                      <div className="contact-actions">
+                        {selectedInfluencer.contactEmail && (
+                          <a
+                            className="contact-action contact-action--email"
+                            href={`mailto:${selectedInfluencer.contactEmail}?subject=${encodeURIComponent(`Collaboration inquiry for ${selectedInfluencer.name}`)}`}
+                          >
+                            Email
+                          </a>
+                        )}
+                        {instagramLink && (
+                          <a
+                            className="contact-action contact-action--instagram"
+                            href={instagramLink.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Instagram
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -574,6 +547,15 @@ function App() {
               Create your profile
             </a>
           </div>
+        </section>
+
+        <section id="how-it-works" className="how-it-works-card">
+          <span className="eyebrow alt">How it works</span>
+          <h2>Good partnerships start with the right match.</h2>
+          <p>
+            Creators build a profile, brands discover and compare talent, then both sides
+            connect to start a collaboration.
+          </p>
         </section>
       </main>
 
