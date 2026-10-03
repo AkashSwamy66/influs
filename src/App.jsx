@@ -699,7 +699,7 @@ function App() {
       <footer className="footer">
         <div>
           <span className="brand-mark small">I</span>
-          <span>Infls</span>
+          <span>Influs</span>
         </div>
         <p>Built for creators and sponsors who want faster collaborations.</p>
       </footer>

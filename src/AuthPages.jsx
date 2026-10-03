@@ -12,7 +12,7 @@ import './AuthPages.css'
 const Brand = () => (
   <a className="auth-brand" href="#top" aria-label="Infls home">
     <span className="auth-brand-mark">i</span>
-    <span>infls<span className="brand-period">.</span></span>
+    <span>influs<span className="brand-period">.</span></span>
   </a>
 )
 
@@ -40,7 +40,7 @@ export function LoginPage({ initialRole = 'Influencer' }) {
 
   return (
     <main className="auth-page">
-      <div className="auth-topbar"><Brand /><a href="#top" className="back-link">← Back to home</a></div>
+      <div className="auth-topbar"><Brand /></div>
       <div className="auth-layout">
         <section className="auth-story">
           <span className="auth-kicker"><span className="status-dot" /> THE CREATOR–BRAND NETWORK</span>
@@ -54,7 +54,7 @@ export function LoginPage({ initialRole = 'Influencer' }) {
         </section>
 
         <section className="login-card">
-          <div className="login-heading"><span className="form-step">WELCOME BACK</span><h2>Sign in to Infls</h2><p>Your next great collaboration is waiting.</p></div>
+          <div className="login-heading"><span className="form-step">WELCOME BACK</span><h2>Sign in to Influs</h2><p>Your next great collaboration is waiting.</p></div>
           <div className="role-switch" aria-label="Choose account type">
             {['Influencer', 'Sponsor'].map((option) => <button key={option} type="button" className={role === option ? 'selected' : ''} onClick={() => { setRole(option); setLoginError('') }}><span>{option === 'Influencer' ? '✦' : '▧'}</span>{option}</button>)}
           </div>
@@ -65,13 +65,13 @@ export function LoginPage({ initialRole = 'Influencer' }) {
             {loginError && <p className="registration-error" role="alert">{loginError}</p>}
             <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'} <span>↗</span></button>
           </form>
-          <div className="login-divider"><span />or<span /></div>
-          <button type="button" className="google-button"><b>G</b> Continue with Google</button>
-          <p className="signup-prompt">New to Infls? <a href={role === 'Sponsor' ? '#register/sponsor' : '#profile'}>{role === 'Sponsor' ? 'Create a sponsor account' : 'Create your creator profile'} <span>↗</span></a></p>
+          {/* <div className="login-divider"><span />or<span /></div>
+          <button type="button" className="google-button"><b>G</b> Continue with Google</button> */}
+          <p className="signup-prompt">New to Influs? <a href={role === 'Sponsor' ? '#register/sponsor' : '#profile'}>{role === 'Sponsor' ? 'Create a sponsor account' : 'Create your creator profile'} <span>↗</span></a></p>
           <small className="terms-note">By continuing, you agree to our <a href="#terms">Terms</a> and <a href="#privacy">Privacy Policy</a>.</small>
         </section>
       </div>
-      <footer className="auth-footer"><span>© 2026 Infls</span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
+      <footer className="auth-footer"><span>© 2026 Influs </span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
     </main>
   )
 }
@@ -110,7 +110,7 @@ export function SponsorRegisterPage() {
         <aside className="profile-sidebar"><span className="auth-kicker"><span className="status-dot" /> SPONSOR ONBOARDING</span><h1>Find your<br /><em>next standout.</em></h1><p>Meet creators who know how to move people. Set up your brand account and start building better partnerships.</p><div className="profile-sidebar-art"><div className="art-sun" /><div className="art-card"><span>GOOD IDEAS<br />TRAVEL FAR</span><strong>BRAND × CREATOR</strong></div><span className="art-caption">YOUR NEXT COLLAB STARTS HERE</span></div><div className="sidebar-note"><span>✳</span><p><strong>Made for real collaboration.</strong><br />Find the right voices for your next campaign.</p></div></aside>
         <section className="profile-form-panel sponsor-register-panel">
           <div className="profile-form-head"><div><span className="form-step">SPONSOR ACCOUNT</span><h2>{submitted ? 'You’re on your way.' : 'Create your brand account.'}</h2><p>{submitted ? 'Your registration details are ready.' : 'A few details to get your team started.'}</p></div></div>
-          {submitted ? <div className="profile-success"><span className="success-icon">✓</span><h3>Thanks for joining Infls.</h3><p>{registeredWithApi ? 'Your sponsor account has been registered.' : 'Your registration preview is ready. Set VITE_API_BASE_URL to save it to the backend.'}</p><a className="auth-submit" href="#login/sponsor">Go to sponsor sign in <span>↗</span></a></div> : <form className="creator-form" onSubmit={submitRegistration}>
+          {submitted ? <div className="profile-success"><span className="success-icon">✓</span><h3>Thanks for joining influs.</h3><p>{registeredWithApi ? 'Your sponsor account has been registered.' : 'Your registration preview is ready. Set VITE_API_BASE_URL to save it to the backend.'}</p><a className="auth-submit" href="#login/sponsor">Go to sponsor sign in <span>↗</span></a></div> : <form className="creator-form" onSubmit={submitRegistration}>
             <label>Company or brand name<input name="companyName" placeholder="e.g. Northstar Studio" required /></label>
             <label>Work email<input name="email" type="email" placeholder="you@yourcompany.com" required /></label>
             <label>Create password<input name="password" type="password" placeholder="At least 8 characters" minLength="8" required /></label>
@@ -122,7 +122,7 @@ export function SponsorRegisterPage() {
           </form>}
         </section>
       </div>
-      <footer className="auth-footer"><span>© 2026 Infls</span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
+      <footer className="auth-footer"><span>© 2026 influs </span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
     </main>
   )
 }
@@ -164,7 +164,7 @@ export function ProfileSetupPage() {
     <main className="profile-page">
       <header className="profile-topbar"><Brand /><div className="profile-topbar-right"><span>Already have an account?</span><a href="#login/influencer">Sign in</a></div></header>
       <div className="profile-layout">
-        <aside className="profile-sidebar"><span className="auth-kicker"><span className="status-dot" /> CREATOR ONBOARDING</span><h1>Your story.<br /><em>Your next chapter.</em></h1><p>Build a profile that helps the right brands find you and picture what you can create together.</p><div className="profile-sidebar-art"><div className="art-sun" /><div className="art-card"><span>CREATOR<br />PROFILE</span><strong>INFLS&nbsp; ✳</strong></div><span className="art-caption">MAKE YOUR<br />INTRODUCTION</span></div><div className="sidebar-note"><span>✳</span><p><strong>Show up as you.</strong><br />Your voice is what makes your profile memorable.</p></div></aside>
+        <aside className="profile-sidebar"><span className="auth-kicker"><span className="status-dot" /> CREATOR ONBOARDING</span><h1>Your story.<br /><em>Your next chapter.</em></h1><p>Build a profile that helps the right brands find you and picture what you can create together.</p><div className="profile-sidebar-art"><div className="art-sun" /><div className="art-card"><span>CREATOR<br />PROFILE</span><strong>INFLUS&nbsp; ✳</strong></div><span className="art-caption">MAKE YOUR<br />INTRODUCTION</span></div><div className="sidebar-note"><span>✳</span><p><strong>Show up as you.</strong><br />Your voice is what makes your profile memorable.</p></div></aside>
         <section className="profile-form-panel">
           <div className="profile-form-head"><div><span className="form-step">STEP {step} OF 2</span><h2>{saved ? 'Your profile is taking shape.' : step === 1 ? 'Let’s get to know you.' : 'Show brands what you do.'}</h2><p>{saved ? 'Your details are saved in this preview.' : step === 1 ? 'Start with the details brands will see first.' : 'Add your platforms and collaboration details.'}</p></div><div className="profile-progress"><span style={{ width: step === 1 ? '50%' : '100%' }} /></div></div>
           {saved ? <div className="profile-success"><span className="success-icon">✓</span><h3>Looking good, {form.name || 'creator'}!</h3><p>{registeredWithApi ? 'Your creator account and profile are registered.' : 'Your profile preview is ready. Set VITE_API_BASE_URL to save it to the backend.'}</p><div className="profile-preview"><span className="preview-avatar">{form.name ? form.name.slice(0, 1).toUpperCase() : '✦'}</span><div><strong>{form.name || 'Your name'} {form.handle && <small>{form.handle}</small>}</strong><span>{form.niche} · {form.city || 'Your city'}</span></div><b>{registeredWithApi ? 'SAVED' : 'DRAFT'}</b></div><button className="auth-submit" type="button" onClick={() => setSaved(false)}>Edit your details <span>↗</span></button></div> : <form className="creator-form" onSubmit={submitProfile}>
@@ -180,7 +180,7 @@ export function ProfileSetupPage() {
               <label>Instagram profile<div className="input-prefix"><span>instagram.com/</span><input value={form.instagram} onChange={update('instagram')} placeholder="yourhandle" /></div></label>
               <label>YouTube channel <span className="optional-label">Optional</span><div className="input-prefix"><span>youtube.com/@</span><input value={form.youtube} onChange={update('youtube')} placeholder="yourchannel" /></div></label>
               <label>Profile image URL <span className="optional-label">Optional</span><input type="url" value={form.image} onChange={update('image')} placeholder="https://example.com/your-photo.jpg" /></label>
-              <div className="social-connect-heading"><span>↗</span><div><strong>Your audience metrics</strong><small>Add your latest public stats. Your rating is earned on Infls after reviews.</small></div></div>
+              <div className="social-connect-heading"><span>↗</span><div><strong>Your audience metrics</strong><small>Add your latest public stats. Your rating is earned on Influs after reviews.</small></div></div>
               <div className="form-two-col"><label>Followers<input type="number" min="0" step="1" value={form.followers} onChange={update('followers')} placeholder="e.g. 12500" required /></label><label>Likes<input type="number" min="0" step="1" value={form.likes} onChange={update('likes')} placeholder="e.g. 2400" required /></label></div>
               <div className="form-two-col"><label>Views<input type="number" min="0" step="1" value={form.views} onChange={update('views')} placeholder="e.g. 48000" required /></label><label>Engagement rate (%)<input type="number" min="0" max="100" step="0.1" value={form.engagement} onChange={update('engagement')} placeholder="e.g. 6.5" required /></label></div>
               <label>Starting rate <span className="optional-label">INR · optional</span><div className="input-prefix"><span>₹</span><input type="number" min="0" value={form.rate} onChange={update('rate')} placeholder="Your starting price" /></div></label>
@@ -191,7 +191,7 @@ export function ProfileSetupPage() {
           </form>}
         </section>
       </div>
-      <footer className="auth-footer"><span>© 2026 Infls</span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
+      <footer className="auth-footer"><span>© 2026 Influs </span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
     </main>
   )
 }
@@ -405,7 +405,7 @@ export function CreatorDashboard() {
           ) : null}
         </section>
       </div>
-      <footer className="auth-footer"><span>© 2026 Infls</span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
+      <footer className="auth-footer"><span>© 2026 Influs </span><span>Made for meaningful partnerships&nbsp; ✳</span></footer>
     </main>
   )
 }
