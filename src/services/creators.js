@@ -1,6 +1,7 @@
 import { fallbackInfluencers } from '../data/influencers'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '')
+const apiBaseUrl = "https://influs-backend.onrender.com"
+// import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '')
 const authTokenKey = 'influs_auth_token'
 
 export const hasCreatorApi = Boolean(apiBaseUrl)
