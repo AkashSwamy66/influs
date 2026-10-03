@@ -41,6 +41,16 @@ function App() {
   const [creatorApiError, setCreatorApiError] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('engagement')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [maxRate, setMaxRate] = useState('')
+  const [shortlistedIds, setShortlistedIds] = useState(() => {
+    try {
+      const savedIds = JSON.parse(window.localStorage.getItem('infls-shortlist') || '[]')
+      return Array.isArray(savedIds) ? savedIds : []
+    } catch {
+      return []
+    }
+  })
   const [selectedId, setSelectedId] = useState(fallbackInfluencers[0].id)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
@@ -53,18 +63,42 @@ function App() {
         ? influencers
         : influencers.filter((influencer) => influencer.category === selectedCategory)
 
-    return [...list].sort((a, b) => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const filteredList = list.filter((influencer) => {
+      const matchesQuery =
+        !normalizedQuery ||
+        [influencer.name, influencer.handle, influencer.category, influencer.city, influencer.bio]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(normalizedQuery))
+      const matchesRate = maxRate === '' || influencer.price <= Number(maxRate)
+      return matchesQuery && matchesRate
+    })
+
+    return [...filteredList].sort((a, b) => {
       if (sortBy === 'views') return b.views - a.views
       if (sortBy === 'likes') return b.likes - a.likes
       if (sortBy === 'followers') return b.followers - a.followers
       return b.engagement - a.engagement
     })
-  }, [influencers, selectedCategory, sortBy])
+  }, [influencers, selectedCategory, sortBy, searchQuery, maxRate])
+
+  const shortlistedInfluencers = useMemo(
+    () => shortlistedIds.map((id) => influencers.find((item) => item.id === id)).filter(Boolean),
+    [influencers, shortlistedIds],
+  )
 
   const topInfluencers = useMemo(
     () => [...influencers].sort((a, b) => b.engagement - a.engagement).slice(0, 3),
     [influencers],
   )
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('infls-shortlist', JSON.stringify(shortlistedIds))
+    } catch {
+      // Keep shortlist changes available for this session if storage is disabled.
+    }
+  }, [shortlistedIds])
 
   useEffect(() => {
     if (!hasCreatorApi) return undefined
@@ -149,6 +183,14 @@ function App() {
     setIsModalOpen(true)
   }
 
+  const toggleShortlist = (id) => {
+    setShortlistedIds((currentIds) =>
+      currentIds.includes(id)
+        ? currentIds.filter((currentId) => currentId !== id)
+        : [...currentIds, id],
+    )
+  }
+
   const closeProfile = () => setIsModalOpen(false)
 
   if (route.startsWith('#login')) {
@@ -169,7 +211,7 @@ function App() {
         </a>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#discover">Discover</a>
-          <a href="#pricing">Pricing</a>
+          {/* <a href="#pricing">Pricing</a> */}
         </nav>
         <div className="nav-actions">
           <a className="secondary-btn small-btn" href="#dashboard">My profile</a>
@@ -334,43 +376,141 @@ function App() {
             ))}
           </div>
 
+          <div className="sponsor-filters">
+            <label className="sponsor-search" htmlFor="creatorSearch">
+              <span aria-hidden="true">⌕</span>
+              <input
+                id="creatorSearch"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search creators, niches, or cities"
+              />
+            </label>
+            <label className="budget-filter" htmlFor="maxRate">
+              <span>Max rate</span>
+              <span className="budget-input-wrap">
+                <span aria-hidden="true">₹</span>
+                <input
+                  id="maxRate"
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={maxRate}
+                  onChange={(event) => setMaxRate(event.target.value)}
+                  placeholder="Any"
+                />
+              </span>
+            </label>
+          </div>
+
+          {shortlistedInfluencers.length > 0 && (
+            <section className="shortlist-panel" aria-labelledby="shortlist-title">
+              <div className="shortlist-heading">
+                <div>
+                  <span className="eyebrow alt">Your shortlist</span>
+                  <h3 id="shortlist-title">Compare saved creators</h3>
+                </div>
+                <span className="shortlist-count">{shortlistedInfluencers.length} saved</span>
+              </div>
+              <div className="shortlist-list">
+                {shortlistedInfluencers.map((influencer) => (
+                  <div className="shortlist-item" key={influencer.id}>
+                    <button
+                      className="shortlist-profile"
+                      type="button"
+                      onClick={() => openProfile(influencer.id)}
+                    >
+                      <img src={influencer.image || defaultCreatorImage} alt="" />
+                      <span>
+                        <strong>{influencer.name}</strong>
+                        <small>{influencer.category} · {influencer.city}</small>
+                      </span>
+                    </button>
+                    <span className="shortlist-metric">
+                      <small>Reach</small><strong>{formatCompact(influencer.followers)}</strong>
+                    </span>
+                    <span className="shortlist-metric">
+                      <small>Engagement</small><strong>{influencer.engagement}%</strong>
+                    </span>
+                    <span className="shortlist-metric">
+                      <small>Rate</small><strong>{formatCurrency(influencer.price)}</strong>
+                    </span>
+                    {influencer.contactEmail ? (
+                      <a
+                        className="shortlist-contact"
+                        href={`mailto:${influencer.contactEmail}?subject=${encodeURIComponent(`Collaboration inquiry for ${influencer.name}`)}`}
+                        aria-label={`Email ${influencer.name}`}
+                        title={`Email ${influencer.name}`}
+                      >
+                        ↗
+                      </a>
+                    ) : (
+                      <span className="shortlist-contact unavailable" aria-label="Email unavailable">—</span>
+                    )}
+                    <button
+                      className="shortlist-remove"
+                      type="button"
+                      onClick={() => toggleShortlist(influencer.id)}
+                      aria-label={`Remove ${influencer.name} from shortlist`}
+                      title="Remove from shortlist"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           <div className="creator-grid">
             {filteredInfluencers.map((influencer) => (
-              <button
-                key={influencer.id}
-                type="button"
-                className={selectedId === influencer.id ? 'discover-card active' : 'discover-card'}
-                onClick={() => openProfile(influencer.id)}
-              >
-                <img src={influencer.image || defaultCreatorImage} alt={influencer.name} className="discover-card-image" />
+              <div className="discover-card-wrap" key={influencer.id}>
+                <button
+                  type="button"
+                  className={selectedId === influencer.id ? 'discover-card active' : 'discover-card'}
+                  onClick={() => openProfile(influencer.id)}
+                >
+                  <img src={influencer.image || defaultCreatorImage} alt={influencer.name} className="discover-card-image" />
 
-                <div className="discover-card-body">
-                  <div className="discover-card-top">
-                    <div className="discover-card-meta">
-                      <strong>{influencer.name}</strong>
-                      <span>
-                        {influencer.category} • {influencer.city}
-                      </span>
+                  <div className="discover-card-body">
+                    <div className="discover-card-top">
+                      <div className="discover-card-meta">
+                        <strong>{influencer.name}</strong>
+                        <span>
+                          {influencer.category} • {influencer.city}
+                        </span>
+                      </div>
+                      <span className="discover-rating">★ {influencer.rating}</span>
                     </div>
-                    <span className="discover-rating">★ {influencer.rating}</span>
-                  </div>
 
-                  <p>{influencer.bio}</p>
+                    <p>{influencer.bio}</p>
 
-                  <div className="discover-metrics">
-                    <span>{formatCompact(influencer.followers)} followers</span>
-                    <span>{formatCompact(influencer.views)} views</span>
-                  </div>
+                    <div className="discover-metrics">
+                      <span>{formatCompact(influencer.followers)} followers</span>
+                      <span>{formatCompact(influencer.views)} views</span>
+                    </div>
 
-                  <div className="discover-platforms" aria-label={influencer.platforms.join(', ')}>
-                    {influencer.platforms.map((platform) => (
-                      <span key={platform} className="platform-pill" title={platformMeta[platform].label}>
-                        {platformMeta[platform].icon} {platform}
-                      </span>
-                    ))}
+                    <div className="discover-platforms" aria-label={influencer.platforms.join(', ')}>
+                      {influencer.platforms.map((platform) => (
+                        <span key={platform} className="platform-pill" title={platformMeta[platform].label}>
+                          {platformMeta[platform].icon} {platform}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                <button
+                  type="button"
+                  className={shortlistedIds.includes(influencer.id) ? 'shortlist-toggle saved' : 'shortlist-toggle'}
+                  onClick={() => toggleShortlist(influencer.id)}
+                  aria-label={`${shortlistedIds.includes(influencer.id) ? 'Remove from' : 'Add to'} shortlist: ${influencer.name}`}
+                  aria-pressed={shortlistedIds.includes(influencer.id)}
+                  title={shortlistedIds.includes(influencer.id) ? 'Remove from shortlist' : 'Add to shortlist'}
+                >
+                  {shortlistedIds.includes(influencer.id) ? '✓' : '+'}
+                </button>
+              </div>
             ))}
             {!isLoadingCreators && filteredInfluencers.length === 0 && (
               <p className="empty-results">No creator profiles found.</p>
@@ -390,9 +530,6 @@ function App() {
               <a href="#discover" className="primary-btn large-btn">
                 Browse influencers
               </a>
-              <a href="#profile" className="secondary-btn large-btn">
-                List my profile
-              </a>
             </div>
 
             <div className="stats-grid">
@@ -405,7 +542,7 @@ function App() {
                 <span>Brands</span>
               </div>
               <div>
-                <strong>₹100</strong>
+                <strong>Free</strong>
                 <span>Starter fee</span>
               </div>
             </div>
@@ -527,12 +664,12 @@ function App() {
             <span className="eyebrow alt">Creator subscription</span>
             <h2>Get discovered by brands.</h2>
             <p>
-              Start with a ₹100 creator subscription to set up your profile, connect your
+              Start with a Free creator subscription to set up your profile, connect your
               social accounts, and appear in brand searches.
             </p>
           </div>
 
-          <div className="pricing-card">
+          {/* <div className="pricing-card">
             <div className="pricing-head">
               <span>Creator subscription</span>
               <strong>₹100<span className="price-starting"> starting</span></strong>
@@ -546,7 +683,7 @@ function App() {
             <a href="#profile" className="primary-btn wide-btn">
               Create your profile
             </a>
-          </div>
+          </div> */}
         </section>
 
         <section id="how-it-works" className="how-it-works-card">

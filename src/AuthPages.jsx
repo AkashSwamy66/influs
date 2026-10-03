@@ -295,6 +295,23 @@ export function CreatorDashboard() {
     }
   }
 
+  const profileChecklist = form
+    ? [
+        { label: 'Profile photo', complete: Boolean(form.image.trim()) },
+        { label: 'Creator bio', complete: Boolean(form.bio.trim()) },
+        { label: 'Social account', complete: Boolean(form.instagram.trim() || form.youtube.trim()) },
+        {
+          label: 'Audience metrics',
+          complete: Boolean(form.followers && form.views && form.engagement),
+        },
+        { label: 'Starting rate', complete: Number(form.price) > 0 },
+        { label: 'Niche and location', complete: Boolean(form.category.trim() && form.city.trim()) },
+      ]
+    : []
+  const profileCompleteness = profileChecklist.length
+    ? Math.round((profileChecklist.filter((item) => item.complete).length / profileChecklist.length) * 100)
+    : 0
+
   return (
     <main className="profile-page">
       <header className="profile-topbar">
@@ -310,6 +327,47 @@ export function CreatorDashboard() {
           <span className="auth-kicker"><span className="status-dot" /> YOUR ACCOUNT</span>
           <h1>{account?.role === 'sponsor' ? <>Your brand.<br /><em>Your partnerships.</em></> : <>Your profile.<br /><em>Your next chapter.</em></>}</h1>
           <p>{account?.role === 'sponsor' ? 'Your sponsor account details.' : 'Keep your creator profile and audience details current for brands.'}</p>
+          {form && (
+            <section className="creator-live-preview" aria-label="Live creator profile preview">
+              <div className="creator-preview-label">SPONSOR PREVIEW</div>
+              <div className="creator-preview-person">
+                {form.image.trim() ? (
+                  <img src={form.image} alt="" />
+                ) : (
+                  <span className="creator-preview-initial">{form.name.trim().charAt(0).toUpperCase() || '✦'}</span>
+                )}
+                <div>
+                  <strong>{form.name || 'Your name'}</strong>
+                  <small>{form.handle || '@yourhandle'}</small>
+                </div>
+              </div>
+              <div className="creator-preview-niche">{form.category || 'Your niche'} · {form.city || 'Your city'}</div>
+              <p className="creator-preview-bio">{form.bio || 'Your bio will appear here. Tell brands what you create and who you reach.'}</p>
+              <div className="creator-preview-stats">
+                <div><strong>{Number(form.followers || 0).toLocaleString('en-IN')}</strong><small>Followers</small></div>
+                <div><strong>{form.engagement || '0'}%</strong><small>Engagement</small></div>
+                <div><strong>{Number(form.price || 0) > 0 ? `₹${Number(form.price).toLocaleString('en-IN')}` : 'Add rate'}</strong><small>Starting rate</small></div>
+              </div>
+              {(form.instagram || form.youtube) && (
+                <div className="creator-preview-links">
+                  {form.instagram && <a href={form.instagram} target="_blank" rel="noreferrer">Instagram ↗</a>}
+                  {form.youtube && <a href={form.youtube} target="_blank" rel="noreferrer">YouTube ↗</a>}
+                </div>
+              )}
+              <div className="creator-completeness">
+                <div className="creator-completeness-heading"><strong>Profile strength</strong><span>{profileCompleteness}%</span></div>
+                <div className="creator-completeness-track" role="progressbar" aria-label="Profile completeness" aria-valuenow={profileCompleteness} aria-valuemin="0" aria-valuemax="100">
+                  <span style={{ width: `${profileCompleteness}%` }} />
+                </div>
+                <ul>
+                  {profileChecklist.filter((item) => !item.complete).map((item) => (
+                    <li key={item.label}>{item.label}</li>
+                  ))}
+                  {profileCompleteness === 100 && <li className="creator-checklist-complete">Ready for brand discovery</li>}
+                </ul>
+              </div>
+            </section>
+          )}
         </aside>
 
         <section className="profile-form-panel">
